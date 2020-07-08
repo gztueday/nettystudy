@@ -8,10 +8,13 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.ReferenceCountUtil;
+import io.netty.util.concurrent.GlobalEventExecutor;
 
 //Netty的client、server交互过程
 //bossGroup是大管家，负责门口迎客
@@ -27,6 +30,11 @@ import io.netty.util.ReferenceCountUtil;
 //客人提出要求，由ServerChildHandler处理，
 //ServerChildHandler是SocketChannel内部用于处理和截获通道接收和发送的数据的ChannelPipeline（责任链模式）的子类
 public class Server {
+	
+	//定义一个保存所以客户端连接的list
+	//用默认线程来处理通道组上的事件
+	public static ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+	
 	public static void main(String[] args) throws Exception {
 		//大管家
 		//只负责客户端的连接，连接上了之后的一个个socket所产生的事件交给workerGroup处理
@@ -75,6 +83,18 @@ public class Server {
 
 //这里用来处理客人进来之后，对其要求的处理
 class ServerChildHandler extends ChannelInboundHandlerAdapter {
+	
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		//通知client
+		//client执行f.channel().closeFuture().sync();然后client主线程结束
+		ctx.close();
+	}
+
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		Server.clients.add(ctx.channel());
+	}
 
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -92,7 +112,10 @@ class ServerChildHandler extends ChannelInboundHandlerAdapter {
 			buf.getBytes(buf.readerIndex(), bytes);
 			System.out.println(new String(bytes));
 			//此方法自动释放buf对操作系统的引用，需要把ReferenceCountUtil.release(buf);注释掉
-			ctx.writeAndFlush(msg);
+			//ctx.writeAndFlush(msg);
+			
+			//拿出通道组中的每条通道写数据
+			Server.clients.writeAndFlush(msg);
 		} finally {
 			//释放buf对操作系统内存的引用，不释放容易引起内存泄露
 			//if(buf != null) ReferenceCountUtil.release(buf);
