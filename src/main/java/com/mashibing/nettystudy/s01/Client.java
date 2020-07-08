@@ -1,13 +1,18 @@
 package com.mashibing.nettystudy.s01;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.ReferenceCountUtil;
 
 public class Client {
     public static void main(String[] args) {
@@ -42,7 +47,8 @@ public class Client {
 			//.sync();//好了，就连接上了。sync()方法用于确保connect()方法成功了才往下走
 			f.sync(); //阻塞住，直到出了结果为止
 			System.out.println("...");
-			
+			//马老师因为没写这句话，调试了20分钟（16.3节 43:00）
+			f.channel().closeFuture().sync();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} finally {
@@ -66,13 +72,52 @@ class ClientChannelInitializer extends ChannelInitializer<SocketChannel> {
 	protected void initChannel(SocketChannel ch) throws Exception {
 		//ChannelInitializer是做channel初始化用的
 		//当channel连到服务器上以后，调用initChannel方法
-		System.out.println(ch);
+		//往server端写数据
+		ch.pipeline().addLast(new ChildHandler());
 	}
 }
+class ChildHandler extends ChannelInboundHandlerAdapter {
+
+	@Override
+	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+		ByteBuf buf = null;
+		try {
+			buf = (ByteBuf) msg;
+			byte[] bytes = new byte[buf.readableBytes()];
+			buf.getBytes(buf.readerIndex(), bytes);
+			System.out.println(new String(bytes));
+		} finally {
+			if(buf != null) ReferenceCountUtil.release(buf);
+		}
+	}
+	
+	//网络上都是通过比特流（01010101001），这样来写。
+	//所以你任何东西，想放到网上来写的话，只有一个办法，就是转换成字节数组，就是二进制
+	//在NIO里面，有一个ByteBuffer，但是特别难用
+	//所以在netty里面，有一个可以用的字节数组：ByteBuf
+	//在netty里面，写任何数据，最终都是由ByteBuf写出去的，而且ByteBuf效率特别高
+	//在netty里面，写任何数据，归根结底都要搞成ByteBuf，因为Netty读数据，是ByteBuf
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		//buf直接指向系统内存，需要释放，因为跳过了GC
+		//client往server写了个数据，hello
+		ByteBuf buf = Unpooled.copiedBuffer("hello".getBytes());
+		//writeAndFlush()方法内部自动释放内存
+		ctx.writeAndFlush(buf);
+	}
+}
+
 //所以netty是事件模型的，你只要处理事件发生之后，你需要做什么样的处理就行了，就是System.out.print(ch)这部分代码
 //netty里面所有的方法都是异步方法
 
-
+//解释一下为什么ByteBuf效率特别高？
+//JVMg管理着自己的内存，JVM运行在操作系统上，
+//操作系统管理自己更大的内存，
+//如果一个网络数据，首先是写给操作系统，
+//JVM想用它的话，得把这份数据copy到虚拟机的内存中来，
+//少不了一个拷贝的过程。往外写也是一样的，
+//而Netty的ByteBuf是在JVM里面直接访问操作系统内存。所以叫 Direct Memory，直接内存
+//直接访问内存带来的问题？跳过了JVM的垃圾回收机制
 
 
 
