@@ -22,10 +22,10 @@ public class Client {
 		Bootstrap b = new Bootstrap(); //解靴子带
 		try {
 			ChannelFuture f = b.group(group) //启动时指定线程池，group就是线程池
-			.channel(NioSocketChannel.class) //指定连到服务器上的channel类型。通过这里指定不同的channel就可以实现netty的阻塞、非阻塞版本
-			 //当channel上有事件来的时候，交给哪个handler处理
-			.handler(new ClientChannelInitializer())
-			.connect("localhost", 8888);
+				.channel(NioSocketChannel.class) //指定连到服务器上的channel类型。通过这里指定不同的channel就可以实现netty的阻塞、非阻塞版本
+				 //当channel上有事件来的时候，交给哪个handler处理
+				.handler(new ClientChannelInitializer())
+				.connect("localhost", 8888);
 			
 			//如果不加sync()，需要这样写：
 			f.addListener(new ChannelFutureListener() {
