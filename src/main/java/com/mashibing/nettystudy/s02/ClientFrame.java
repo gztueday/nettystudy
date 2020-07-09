@@ -37,16 +37,12 @@ public class ClientFrame extends Frame {
 		});
 		
 		this.setVisible(true);
+		
+		new Client().connect();
 	}
 	
 	public static void main(String[] args) {
 		new ClientFrame();
-		initClient();
-	}
-	
-	public static void initClient() {
-		Client c = new Client();
-		c.connect();
 	}
 
 }
