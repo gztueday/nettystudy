@@ -16,23 +16,35 @@ import io.netty.util.ReferenceCountUtil;
 
 public class Client {
     public static void main(String[] args) {
-    	//事件处理的线程池：netty的线程封装在这个里面
+    	//netty自动是多线程的，你想用单线程都不行，Netty的线程封装在EventLoopGroup里面
+    	//EventLoopGroup:事件处理的线程池：netty的线程封装在这个里面
     	//Event:网络上的IO事件
     	//Loop:这些事件循环不停的处理
     	//Group:形成一个组，做成一个池子
     	//new NioEventLoopGroup(); 默认值，CPU核数*2
     	//new NioEventLoopGroup(1); 客户端，默认起一个线程就可以了
+    	//如果你是客户端，起1个线程就够了
+    	//但是如果你客户端写的非常频繁、读的也非常频繁，可以多起几个线程
 		EventLoopGroup group = new NioEventLoopGroup(1);
 		//如何起一个socket，去连接远程服务器呢？netty里面进行了一个封装，Bootstrap（辅助启动类）
 		Bootstrap b = new Bootstrap(); //解靴子带
 		try {
+			/***** 如果远程有一个server，这一句话就连上了 start *****/
 			ChannelFuture f = b.group(group) //启动时指定线程池，group就是线程池
-				.channel(NioSocketChannel.class) //指定连到服务器上的channel类型。通过这里指定不同的channel就可以实现netty的阻塞、非阻塞版本
+				//指定将来连到服务器上的channel类型。通过这里指定不同的channel就可以实现netty的阻塞、非阻塞版本
+				//NioSocketChannel.class 非阻塞
+				//SocketChannel.class 就是阻塞版
+				.channel(NioSocketChannel.class)
 				 //当channel上有事件来的时候，交给哪个handler处理
 				.handler(new ClientChannelInitializer())
 				.connect("localhost", 8888);
+			/***** 如果远程有一个server，这一句话就连上了 end *****/
 			
-			//如果不加sync()，需要这样写：
+			//ChannelFuture，就是client连接server这件事(即connect方法)成功与否，在ChannelFuture里面
+			//因为netty里面所有方法都是异步的，所以执行完connect它就不管了，那么到底连接成功没成功啊？
+			//这件事在ChannelFuture里面。连接成功了的话，怎么处理啊？也有ChannelFuture决定
+			//connect这件事成功没成功，你得写个监听器去监听它
+			//所以如果不加.sync()，需要这样写：
 			f.addListener(new ChannelFutureListener() {
 				@Override
 				public void operationComplete(ChannelFuture future) throws Exception {

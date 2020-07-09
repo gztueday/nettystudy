@@ -24,7 +24,7 @@ public class ClientFrame extends Frame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//把字符串发送到服务器
-				ta.setText(ta.getText() + "\next" + tf.getText());
+				ta.setText(ta.getText() + "\n" + tf.getText());
 				tf.setText("");
 			}
 		});
@@ -41,7 +41,11 @@ public class ClientFrame extends Frame {
 	
 	public static void main(String[] args) {
 		new ClientFrame();
-		
+		initClient();
+	}
+	
+	public static void initClient() {
+		Client c = new Client();
 	}
 
 }

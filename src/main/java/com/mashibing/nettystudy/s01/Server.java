@@ -31,7 +31,7 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 //ServerChildHandler是SocketChannel内部用于处理和截获通道接收和发送的数据的ChannelPipeline（责任链模式）的子类
 public class Server {
 	
-	//定义一个保存所以客户端连接的list
+	//定义一个保存所有客户端连接的list
 	//用默认线程来处理通道组上的事件
 	public static ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 	
