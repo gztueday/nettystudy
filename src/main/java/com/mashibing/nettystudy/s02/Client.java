@@ -50,7 +50,6 @@ public class Client {
 			});
 			
 			f.sync(); //×èÈû×¡
-			System.out.println("...");
 			//¼àÌýclose
 			f.channel().closeFuture().sync();
 		} catch (InterruptedException e) {
@@ -64,6 +63,11 @@ public class Client {
 		ByteBuf buf = Unpooled.copiedBuffer(msg.getBytes());
 		channel.writeAndFlush(buf);
 	}
+	
+	public void closeConnect() {
+		this.send("_bye_");
+	}
+	
 }
 
 class ClientChannelInitializer extends ChannelInitializer<SocketChannel> {

@@ -44,6 +44,15 @@ public class Server {
 	
 }
 
+//server和client获得的channel肯定不是同一个，因为他们都不在同一台机器上
+//server和client获得的是channel的两端，就像打电话中你的手机、我的手机
+
+//服务端有很多的ChannelHandlerContext，一个ChannelHandlerContext只服务对应的client
+//ChannelHandlerContext代表的是目前这个channel运行的整个的网络环境，上下文
+//ChannelHandlerContext中有一些比较常用的方法
+//ChannelHandlerContext-writeAndFlush()也是通过channel写
+//ChannelHandlerContext也有.channel()方法，拿到对应的channel
+//ChannelHandlerContext和channel之间是聚合关系，context中有channel
 class ServerChildHandler extends ChannelInboundHandlerAdapter {
 
 	@Override
@@ -63,9 +72,16 @@ class ServerChildHandler extends ChannelInboundHandlerAdapter {
 			buf.getBytes(buf.readerIndex(), bytes);
 			System.out.println("Server 接受到的 Client 端的内容 ：" + new String(bytes));
 			
-			System.out.println(Server.clients.size());
-			//自动释放buf
-			Server.clients.writeAndFlush(msg);
+			String s = new String(bytes);
+			
+			if(s.equals("_bye_")) {
+				System.out.println("客户端要求退出...........");
+				Server.clients.remove(ctx.channel());
+				ctx.close();
+			} else {
+				//此方法自动释放buf
+				Server.clients.writeAndFlush(msg);
+			}
 		} finally {
 			//手动释放buf
 		}
@@ -73,6 +89,8 @@ class ServerChildHandler extends ChannelInboundHandlerAdapter {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		cause.printStackTrace();
+		Server.clients.remove(ctx.channel());
 		//通知client执行f.channel().closeFuture().sync();回调函数
 		ctx.close();
 	}

@@ -41,6 +41,7 @@ public class ClientFrame extends Frame {
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
+				c.closeConnect();
 				System.exit(0);
 			}
 		});
