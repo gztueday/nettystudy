@@ -85,10 +85,10 @@ class ClientChannelInitializer extends ChannelInitializer<SocketChannel> {
 		//ChannelInitializer是做channel初始化用的
 		//当channel连到服务器上以后，调用initChannel方法
 		//往server端写数据
-		ch.pipeline().addLast(new ChildHandler());
+		ch.pipeline().addLast(new ClientHandler());
 	}
 }
-class ChildHandler extends ChannelInboundHandlerAdapter {
+class ClientHandler extends ChannelInboundHandlerAdapter {
 
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {

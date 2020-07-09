@@ -57,11 +57,13 @@ class ServerChildHandler extends ChannelInboundHandlerAdapter {
 		ByteBuf buf = null;
 		try {
 			buf = (ByteBuf) msg;
-			System.out.println("Server 接受：" + buf);
 			byte[] bytes = new byte[buf.readableBytes()];
-			buf.readBytes(bytes);
-			System.out.println(new String(bytes));
+			//buf.readBytes(bytes); 这里因为调用错了方法，查找错误半个小时
+			//getbytes：将该缓冲区中从给定索引开始的数据传送到指定的目的地
+			buf.getBytes(buf.readerIndex(), bytes);
+			System.out.println("Server 接受到的 Client 端的内容 ：" + new String(bytes));
 			
+			System.out.println(Server.clients.size());
 			//自动释放buf
 			Server.clients.writeAndFlush(msg);
 		} finally {

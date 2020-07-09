@@ -11,10 +11,18 @@ import java.awt.event.WindowEvent;
 
 public class ClientFrame extends Frame {
 	
+	private static final ClientFrame INSTANCE = new ClientFrame();
+	
+	private Client c;
+	
 	TextArea ta = new TextArea();
 	TextField tf = new TextField();
 	
-	public ClientFrame() {
+	public static final ClientFrame getInstance() {
+		return INSTANCE;
+	}
+	
+	private ClientFrame() {
 		this.setSize(600, 400);
 		this.setLocation(100, 20);
 		this.add(ta, BorderLayout.CENTER);
@@ -24,7 +32,8 @@ public class ClientFrame extends Frame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//把字符串发送到服务器
-				ta.setText(ta.getText() + "\n" + tf.getText());
+				c.send(tf.getText());
+				//ta.setText(ta.getText() + "\n" + tf.getText());
 				tf.setText("");
 			}
 		});
@@ -35,14 +44,21 @@ public class ClientFrame extends Frame {
 				System.exit(0);
 			}
 		});
-		
-		this.setVisible(true);
-		
-		new Client().connect();
+	}
+	
+	private void connectToServer() {
+		c = new Client();
+		c.connect();
 	}
 	
 	public static void main(String[] args) {
-		new ClientFrame();
+		ClientFrame frame = ClientFrame.INSTANCE;
+		frame.setVisible(true);
+		frame.connectToServer();
+	}
+	
+	public void updateText(String msgAccepted) {
+		this.ta.setText(ta.getText() + System.getProperty("line.separator") + msgAccepted);
 	}
 
 }

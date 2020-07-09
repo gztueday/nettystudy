@@ -1,0 +1,5 @@
+聊天室
+S03：窗口显示完毕后调用new Client().connect();
+S04:
+Client类保存并初始化channel
+封装Client.send(String msg)

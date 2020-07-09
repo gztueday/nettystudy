@@ -3,6 +3,7 @@ package com.mashibing.nettystudy.s02;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -16,7 +17,12 @@ import io.netty.util.ReferenceCountUtil;
 
 public class Client {
 	
-	private String msg;
+	//channel相当于网络里面的socket，必须要用channel发消息
+	//也可以用ChannelHandlerContext来发消息，因为在ChannelHandlerContext里面也是调用自己的channel()方法，
+	//拿到那个channel，再发消息
+	//一个客户端连接到服务器上，会有一个channel存在
+	//channel什么时候初始化呢？应该是在连上服务器的时候
+	private Channel channel = null;
 	
 	public void connect() {
 		//大管家
@@ -35,6 +41,8 @@ public class Client {
 				public void operationComplete(ChannelFuture future) throws Exception {
 					if(future.isSuccess()) {
 						System.out.println("connected!");
+						//channel在确认client连接server成功之后，初始化
+						channel = future.channel();
 					} else {
 						System.out.println("not connected!");
 					}
@@ -42,7 +50,7 @@ public class Client {
 			});
 			
 			f.sync(); //阻塞住
-			
+			System.out.println("...");
 			//监听close
 			f.channel().closeFuture().sync();
 		} catch (InterruptedException e) {
@@ -50,7 +58,11 @@ public class Client {
 		} finally {
 			group.shutdownGracefully(); //优雅的关闭
 		}
-		
+	}
+	
+	public void send(String msg) {
+		ByteBuf buf = Unpooled.copiedBuffer(msg.getBytes());
+		channel.writeAndFlush(buf);
 	}
 }
 
@@ -60,11 +72,28 @@ class ClientChannelInitializer extends ChannelInitializer<SocketChannel> {
 	protected void initChannel(SocketChannel ch) throws Exception {
 		//ChannelInitializer是做channel初始化的
 		//当client连接到服务器上后，调用initChannel方法，往Server端写数据
-		ch.pipeline().addLast(new ChildHandler());
+		ch.pipeline().addLast(new ClientHandler());
 	}
 }
 
-class ChildHandler extends ChannelInboundHandlerAdapter {
+class ClientHandler extends ChannelInboundHandlerAdapter {
+
+	@Override
+	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+		ByteBuf buf = null;
+		try {
+			buf = (ByteBuf) msg;
+			byte[] bytes = new byte[buf.readableBytes()];
+			buf.getBytes(buf.readerIndex(), bytes);
+			String msgAccepted = new String(bytes);
+			System.out.println("channelRead : " + msgAccepted);
+			ClientFrame.getInstance().updateText(msgAccepted);
+//			buf.writeBytes(bytes);
+//			System.out.println(new String(bytes));
+		} finally {
+			if(buf != null) ReferenceCountUtil.release(buf);
+		}
+	}
 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -77,18 +106,5 @@ class ChildHandler extends ChannelInboundHandlerAdapter {
 		//client往server写了个数据，hello
 		ByteBuf buf = Unpooled.copiedBuffer("hello，我上线了！".getBytes());
 		ctx.writeAndFlush(buf);
-	}
-
-	@Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-		ByteBuf buf = null;
-		try {
-			buf = (ByteBuf) msg;
-			byte[] bytes = new byte[buf.readableBytes()];
-			buf.writeBytes(bytes);
-			System.out.println(new String(bytes));
-		} finally {
-			if(buf != null) ReferenceCountUtil.release(buf);
-		}
 	}
 }
