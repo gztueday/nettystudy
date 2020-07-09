@@ -46,6 +46,7 @@ public class Server {
 		
 		try {
 			ServerBootstrap b = new ServerBootstrap();
+			//ChannelFuture用来判断connect这件事成功没成功
 			ChannelFuture f = b.group(bossGroup, workerGroup)
 					//指定channel类型
 					.channel(NioServerSocketChannel.class)

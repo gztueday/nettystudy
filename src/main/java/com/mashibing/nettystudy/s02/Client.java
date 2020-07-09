@@ -33,6 +33,7 @@ public class Client {
 		Bootstrap b = new Bootstrap();
 		
 		try {
+			//ChannelFuture用来判断connect这件事成功没成功
 			ChannelFuture f = b.group(group) //启动时指定线程池
 					.channel(NioSocketChannel.class) //指定连接到服务器的channel类型
 					.handler(new ClientChannelInitializer()) //当channel上有事件的时候，交给哪个handler处理
