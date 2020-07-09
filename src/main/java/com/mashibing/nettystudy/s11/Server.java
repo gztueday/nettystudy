@@ -1,4 +1,4 @@
-package com.mashibing.nettystudy.s02;
+package com.mashibing.nettystudy.s11;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -19,7 +19,8 @@ public class Server {
 	
 	public static ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 	
-	public static void main(String[] args) throws Exception {
+	public void serverStart() {
+
 		//大管家
 		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 		//服务员
@@ -29,18 +30,23 @@ public class Server {
 			ServerBootstrap b = new ServerBootstrap();
 			
 			ChannelFuture f = b.group(bossGroup, workerGroup)
-					.channel(NioServerSocketChannel.class)
-					.childHandler(new ChannelInitializer<SocketChannel>() {
-						@Override
-						protected void initChannel(SocketChannel ch) throws Exception {
-							ChannelPipeline pl = ch.pipeline();
-							pl.addLast(new ServerChildHandler());
-						}
-					})
-					.bind(8888).sync();
-			System.out.println("Server Started!");
+			.channel(NioServerSocketChannel.class)
+			.childHandler(new ChannelInitializer<SocketChannel>() {
+				@Override
+				protected void initChannel(SocketChannel ch) throws Exception {
+					ChannelPipeline pl = ch.pipeline();
+					pl.addLast(new ServerChildHandler());
+				}
+			})
+			.bind(8888)
+			.sync();
+			
+			ServerFrame.getInstance().updateServerMsg("Server Started!");
+			
 			//等着close的那个
 			f.channel().closeFuture().sync();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		} finally {
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
@@ -75,9 +81,8 @@ class ServerChildHandler extends ChannelInboundHandlerAdapter {
 			//buf.readBytes(bytes); 这里因为调用错了方法，查找错误半个小时
 			//getbytes：将该缓冲区中从给定索引开始的数据传送到指定的目的地
 			buf.getBytes(buf.readerIndex(), bytes);
-			System.out.println("Server 接受到的 Client 端的内容 ：" + new String(bytes));
-			
 			String s = new String(bytes);
+			ServerFrame.getInstance().updateClientMsg(s);
 			
 			if(s.equals("_bye_")) {
 				System.out.println("客户端要求退出...........");
