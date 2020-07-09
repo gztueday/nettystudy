@@ -46,6 +46,7 @@ public class ClientFrame extends Frame {
 	
 	public static void initClient() {
 		Client c = new Client();
+		c.connect();
 	}
 
 }

@@ -18,11 +18,7 @@ public class Client {
 	
 	private String msg;
 	
-	public Client() {
-		init();
-	}
-	
-	public void init() {
+	public void connect() {
 		//大管家
 		EventLoopGroup group = new NioEventLoopGroup(1);
 		//靴子带，起一个socket，去连接远程服务器
