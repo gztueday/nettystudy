@@ -1,0 +1,75 @@
+学习使用Codec
+	定义TankMsg x,y
+	TankMsgEncoder负责编码
+	TankMsgDecoder负责解码
+	将Encoder加入客户端Channel处理链
+	将Decoder加入服务端Channel处理链
+	在客户端channelActive的时候发送一个TankMsg
+	观察服务器是否接受正确
+
+
+目前Netty实现的server、client只能传递String。如何传递复杂的数据类型，需要实现自定义协议
+如何实现自定义协议？
+自定义协议的实现方式非常多。
+我们学习使用：
+使用Netty的Codec，编码解码器
+
+//如何将TankMsg写到网上去？
+//如果是用序列化，int类型是4个字节，两个就是8个字节，
+//这一序列化的话，就是好几十个字节出去了
+//所以序列化在高效传输时，不适用
+//怎么办呢？
+//Netty里面帮我们实现非常好用的接口：Codec
+public class TankMsg
+codec如何使用呢？
+先看Encoder，编码器
+MessageToByteEncoder: 把一个消息TankMsg 转换成字节
+public class TankMsgEncoder extends MessageToByteEncoder<TankMsg>
+写好这个编码器之后，怎么使用呢？
+ch.pipeline()
+	//XXXEncoder、XXXDecoder也是channelHandler的一种
+	//即它们也是责任链上的一种责任
+	.addLast(new TankMsgEncoder())
+	.addLast(new ClientHandler());
+解释一下：
+client端，有一个channel初始化之后。channel对应的有一个pipeline，
+pipeline上可以加一系列的处理器，
+首先加了一个XXXEncoder处理器，用来将TankMsg转换为一个字节数组ByteBuf，
+然后后面是我们自定义的ClientHandler。
+既然XXXEncoder可以将TankMsg转换为ByteBuf，
+那么client端在对外写内容的时候，我就不用再转换为ByteBuf了，直接写TankMsg 就可以了
+它会自动的找到XXXEncode，然后转换为ByteBuf，再传递出去
+
+TCP拆包、粘包的问题？
+在TCP里面，我们要写一个数据出去的话，
+这个数据可能在网络底层，被分成好多不同的小块
+假如有一个字符串: "abc" 写出去
+在网络底层，可能给它改成:
+"ab"一个包，"c"一个包
+或者
+"a"一个包，"bc"一个包
+在服务器端收到，可能是两个包，或者是三个包。
+在这种情况下，需要把这些包粘起来，才能进行处理。
+那怎么粘呢？
+你需要判断传过来的到底是多少个数据，
+UDP没有顺序，TCP是有顺序的，TCP自己保证顺序。
+所以在TCP里面你要判断，你要知道传过来的数据有多少个字节，
+字节数不够，就等着。
+所以：if(in.readableBytes()<8) return; 这句话是等着字节数够了，才进行处理
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

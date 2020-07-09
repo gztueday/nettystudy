@@ -1,0 +1,2 @@
+server增加客户端
+遗留问题：现在client、server传递的只是字符串

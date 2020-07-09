@@ -1,6 +1,4 @@
-package com.mashibing.nettystudy.s02;
-
-import com.mashibing.nettystudy.s13.TankMsgEncoder;
+package com.mashibing.nettystudy.s13;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -78,7 +76,11 @@ class ClientChannelInitializer extends ChannelInitializer<SocketChannel> {
 	protected void initChannel(SocketChannel ch) throws Exception {
 		//ChannelInitializer是做channel初始化的
 		//当client连接到服务器上后，调用initChannel方法，往Server端写数据
-		ch.pipeline().addLast(new ClientHandler());
+		ch.pipeline()
+			//XXXEncoder、XXXDecoder也是channelHandler的一种
+			//即它们也是责任链上的一种责任
+			.addLast(new TankMsgEncoder())
+			.addLast(new ClientHandler());
 	}
 }
 
@@ -110,7 +112,10 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
 		//在Netty里面，写任何数据，最终都是由ByteBuf写出去的，而且效率特别高
 		//在Netty里面，读数据也是ByteBuf
 		//client往server写了个数据，hello
-		ByteBuf buf = Unpooled.copiedBuffer("hello，我上线了！".getBytes());
-		ctx.writeAndFlush(buf);
+		//ByteBuf buf = Unpooled.copiedBuffer("hello，我上线了！".getBytes());
+		//ctx.writeAndFlush(buf);
+		
+		//TankMsgEncode可以将TankMsg转换为ByteBuf
+		ctx.writeAndFlush(new TankMsg(5, 8));
 	}
 }
