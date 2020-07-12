@@ -20,7 +20,7 @@ public class Server {
 		//那还怎么接收客户端连接？那还怎么开门迎客呢？AIO相当于是做了个机器人在那里开门迎客。
 		//怎么做的呢？
 		//写了一个钩子函数：new CompletionHandler<AsynchronousSocketChannel, Object>()
-		//accept结束了字后，CompletionHandler类中的completed方法会自动调用
+		//accept结束了之后，CompletionHandler类中的completed方法会自动调用
 		//所以，实际上AIO中的accept方法就是网大门口那里写了一个Observer，
 		//客人来了，大家是怎么处理的呢？
 		//BIO:只有一个人接待客人，有一个client来了，它就干别的事去了，后面的人进不来

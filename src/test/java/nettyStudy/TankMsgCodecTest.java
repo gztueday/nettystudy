@@ -28,7 +28,7 @@ public class TankMsgCodecTest {
 	}
 
 	@Test
-	public void testTankMsgEncoder2() {
+	public void testTankMsgDecoder() {
 		ByteBuf buf =  Unpooled.buffer();
 		TankMsg msg = new TankMsg(10, 10);
 		buf.writeInt(msg.x);
