@@ -61,7 +61,7 @@ public class PoolServer {
 		@Override
 		public void run() {
 			SocketChannel channel = (SocketChannel) key.channel();
-			ByteBuffer buffer = ByteBuffer.allocate(1024);
+			ByteBuffer buffer = ByteBuffer.allocate(1024); //创建了一个1024个byte的数组的缓冲区
 			ByteArrayOutputStream baos =  new ByteArrayOutputStream();
 			try {
 				int size = 0;

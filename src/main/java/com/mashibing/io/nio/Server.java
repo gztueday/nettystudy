@@ -44,6 +44,8 @@ public class Server {
 			// 也是阻塞方法，大管家可以管理很多channel，有任何一个channel有selector关心的事件发生的时候，返回
             // 如果大管家管理了很多channel，它会轮询管理，并且把每个channel的事件都取出来
 			//此时大管家只管理了server这个channel，而且只关心客户端连接这个server的事件
+			//while:true的每一次循环，大管家都会把管理的所有channel的所有事件全都取出来
+			//阻塞到至少有一个通道在你注册的事件上就绪了
 			selector.select();
 			
             // 返回了之后呢，就把拿到的那些事件，这些事件是装在SelectionKey里面
@@ -61,13 +63,20 @@ public class Server {
 	}
 
 	private static void handle(SelectionKey key) {
-		 // 判断客户端连接是否可接受
+		//如果这个时候有一个客户端连上来了
+		//大管家判断这件事，是否可以接收它，就是说判断是不是有一个客户端连上来了这件事发生了
 		if(key.isAcceptable()) {
+			//对于上面的这个判断，如果是的话，调用ssc.accept();方法把这个客户端迎进来
 			try {
 				ServerSocketChannel ssc = (ServerSocketChannel) key.channel();
 				
-				// 把客户端迎接进来
+				// 把客户端迎接进来，把我们的客人请到屋里来
                 // 客户端迎接进来之后，它也会产生一个channel，和客户端连接
+				//大管家监视着的是ServerChannel，客户端连上来之后呢，它也会产生一个跟客户端连接的channel
+				//就像跟客户端连接的socket一样。这个是跟客户端连接的通道
+				//如果又有其它客户端连接上来，那又会产生新的通道
+				//如果你想让大管家管理这些新的通道，也很简单，把大管家注册到这些通道上面
+				//如果把大管家注册在这些通道上面，那么这个大管家就可以同时管理好多个channel
 				SocketChannel sc = ssc.accept();
 				sc.configureBlocking(false);
 				// 在客户端的channel上注册我关心的事件，现在关心客户端往我这里写东西的事件
